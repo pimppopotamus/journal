@@ -1,50 +1,57 @@
+import tkinter as tk
+from tkinter import scrolledtext, messagebox
 import datetime
 
 FILENAME = "journal.txt"
 
-def add_note():
-    note = input("Write your note: ").strip()
+def save_note():
+    note = entry.get("1.0", tk.END).strip()
     if not note:
-        print("Empty note skipped.")
+        messagebox.showwarning("Empty", "Write something first.")
         return
+    
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     with open(FILENAME, "a", encoding="utf-8") as f:
-        f.write(f"[{timestamp}] {note}\n")
-    print("Note saved.")
+        f.write(f"[{timestamp}] {note}\n\n")
+    
+    entry.delete("1.0", tk.END)
+    load_notes()
+    messagebox.showinfo("Saved", "Note saved!")
 
-def view_notes():
+def load_notes():
+    notes_area.config(state=tk.NORMAL)
+    notes_area.delete("1.0", tk.END)
     try:
         with open(FILENAME, "r", encoding="utf-8") as f:
-            notes = f.readlines()
+            notes_area.insert(tk.END, f.read())
     except FileNotFoundError:
-        print("No notes yet. Add one first!")
-        return
+        notes_area.insert(tk.END, "No notes yet.")
+    notes_area.config(state=tk.DISABLED)
 
-    if not notes:
-        print("Journal is empty.")
-        return
+# Create the window
+root = tk.Tk()
+root.title("My Journal")
+root.geometry("420x500")          # small window size
+root.resizable(False, False)      # keep it fixed size
 
-    print("\n--- Your Journal ---")
-    for line in notes:
-        print(line.strip())
-    print("--------------------\n")
+# Title
+tk.Label(root, text="Personal Journal", font=("Arial", 14, "bold")).pack(pady=8)
 
-def main():
-    while True:
-        print("\n1. Add note")
-        print("2. View notes")
-        print("3. Quit")
-        choice = input("Choose (1-3): ").strip()
+# Write area
+tk.Label(root, text="Write a note:").pack(anchor="w", padx=10)
+entry = scrolledtext.ScrolledText(root, height=6, wrap=tk.WORD)
+entry.pack(padx=10, pady=5, fill=tk.X)
 
-        if choice == "1":
-            add_note()
-        elif choice == "2":
-            view_notes()
-        elif choice == "3":
-            print("Bye!")
-            break
-        else:
-            print("Invalid choice. Try again.")
+# Save button
+tk.Button(root, text="Save Note", command=save_note, bg="#4CAF50", fg="white").pack(pady=5)
 
-if __name__ == "__main__":
-    main()
+# View past notes
+tk.Label(root, text="Past notes:").pack(anchor="w", padx=10, pady=(10, 0))
+notes_area = scrolledtext.ScrolledText(root, height=14, wrap=tk.WORD, state=tk.DISABLED)
+notes_area.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
+
+# Load existing notes when the window opens
+load_notes()
+
+# Start the window
+root.mainloop()
